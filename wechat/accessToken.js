@@ -24,7 +24,7 @@ class Wechat {
     return new Promise((resolve, reject) => {
       // 将凭据保存为一个文件
       writeFile('accessToken.txt', data, err => {
-        if (err) reject('saveAccessToken方法出了问题：' + err)
+        if (err) return reject('saveAccessToken方法出了问题：' + err)
         resolve()
       })
     })
@@ -33,7 +33,7 @@ class Wechat {
   readAccessToken() {
     return new Promise((resolve, reject) => {
       readFile('accessToken.txt', (err, data) => {
-        if (err) reject('readAccessToken方法出了问题：' + err)
+        if (err) return reject('readAccessToken方法出了问题：' + err)
         // 将读取的Buffer数据转化为json字符串
         data = data.toString()
         // 将json字符串转化为对象
