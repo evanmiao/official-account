@@ -44,14 +44,9 @@ module.exports = async message => {
   } else if (message.MsgType === 'shortvideo') {
     content = '接受了小视频消息'
   } else if (message.MsgType === 'location') {
-    content = `纬度：${message.Location_X}
-经度：${message.Location_Y}
-缩放大小：${message.Scale}
-详情：${message.Label}`
+    content = `纬度：${message.Location_X}\n经度：${message.Location_Y}\n缩放大小：${message.Scale}\n详情：${message.Label}`
   } else if (message.MsgType === 'link') {
-    content = `标题：${message.Title}
-描述：${message.Description}
-网址：${message.Url}`
+    content = `标题：${message.Title}\n描述：${message.Description}\n网址：${message.Url}`
   } else if (message.MsgType === 'event') {
     if (message.Event === 'subscribe') {
       // 用户订阅事件
@@ -68,9 +63,7 @@ module.exports = async message => {
       console.log('无情取关')
     } else if (message.Event === 'LOCATION') {
       // 用户进行会话时，上报一次地理位置消息
-      content = `纬度：${message.Latitude}
-经度：${message.Longitude}
-精度：${message.Precision}`
+      content = '纬度：${message.Latitude}\n经度：${message.Longitude}\n精度：${message.Precision}'
     } else if (message.Event === 'CLICK') {
       content = '点击了菜单'
     } else if (message.Event === 'VIEW') {

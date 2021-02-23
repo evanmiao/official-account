@@ -2,19 +2,21 @@ const { readFile, writeFile } = require('fs')
 const request = require('axios')
 
 const { appID, appsecret } = require('../config')
+const api = require('../api')
+const menu = require('./menu')
 
 class Wechat {
   getAccessToken() {
-    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appID}&secret=${appsecret}`
+    const url = `${api.accessToken}&appid=${appID}&secret=${appsecret}`
     return new Promise((resolve, reject) => {
       request({ url, method: 'GET' })
         .then(res => {
-          // 重新赋值凭据的过期时间 ： 当前时间 + (7200 - 5分钟) * 1000
+          // 重新赋值凭据的过期时间：当前时间 + (7200 - 5分钟) * 1000
           res.data.expires_in = Date.now() + (res.data.expires_in - 300) * 1000
           resolve(res.data)
         })
         .catch(err => {
-          reject('getAccessToken方法出了问题：' + err)
+          reject('getAccessToken method error: ' + err)
         })
     })
   }
@@ -24,7 +26,7 @@ class Wechat {
     return new Promise((resolve, reject) => {
       // 将凭据保存为一个文件
       writeFile('accessToken.txt', data, err => {
-        if (err) return reject('saveAccessToken方法出了问题：' + err)
+        if (err) return reject('saveAccessToken method error: ' + err)
         resolve()
       })
     })
@@ -33,10 +35,10 @@ class Wechat {
   readAccessToken() {
     return new Promise((resolve, reject) => {
       readFile('accessToken.txt', (err, data) => {
-        if (err) return reject('readAccessToken方法出了问题：' + err)
-        // 将读取的Buffer数据转化为json字符串
+        if (err) return reject('readAccessToken method error: ' + err)
+        // 将读取的 Buffer 数据转化为 json 字符串
         data = data.toString()
-        // 将json字符串转化为对象
+        // 将 json 字符串转化为对象
         data = JSON.parse(data)
         resolve(data)
       })
@@ -60,9 +62,9 @@ class Wechat {
 
   // 用来获取没有过期的 access_token
   fetchAccessToken() {
-    // 优化操作,优化不去执行读取文件操作
+    // 优化操作，优化不去执行读取文件操作
     if (this.access_token && this.expires_in && this.isValidAccessToken(this)) {
-      // 说明this有凭据和过期时间，并且凭据未过期
+      // 说明 this 有凭据和过期时间，并且凭据未过期
       return Promise.resolve({
         access_token: this.access_token,
         expires_in: this.expires_in
@@ -94,13 +96,55 @@ class Wechat {
         return Promise.resolve(data)
       })
       .then(res => {
-        // 将其请求回来的凭据和过期时间挂载到this上
+        // 将其请求回来的凭据和过期时间挂载到 this 上
         this.access_token = res.access_token
         this.expires_in = res.expires_in
-        // 指定fetchAccessToken方法返回值
+        // 指定 fetchAccessToken 方法返回值
         return Promise.resolve(res)
       })
   }
+
+  // 创建菜单
+  createMenu(data) {
+    return new Promise((resolve, reject) => {
+      this.fetchAccessToken().then(res => {
+        const url = `${api.menu.create}?access_token=${res.access_token}`
+        request({ url, method: 'POST', data })
+          .then(res => resolve(res.data))
+          .catch(err => reject('createMenu method error: ' + err))
+      })
+    })
+  }
+
+  // 删除菜单
+  deleteMenu() {
+    return new Promise((resolve, reject) => {
+      this.fetchAccessToken().then(res => {
+        const url = `${api.menu.delete}?access_token=${res.access_token}`
+        request({ url, method: 'GET' })
+          .then(res => resolve(res.data))
+          .catch(err => reject('deleteMenu method error: ' + err))
+      })
+    })
+  }
+
+  // 获取菜单的配置
+  getMenu() {
+    return new Promise((resolve, reject) => {
+      this.fetchAccessToken().then(res => {
+        const url = `${api.menu.get}?access_token=${res.access_token}`
+        request({ url, method: 'GET' })
+          .then(res => resolve(res.data))
+          .catch(err => reject('getMenu method error: ' + err))
+      })
+    })
+  }
 }
+
+;(async () => {
+  const wechatApi = new Wechat()
+  const res = await wechatApi.createMenu(menu)
+  console.log(res)
+})()
 
 module.exports = Wechat
